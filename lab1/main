@@ -1,1 +1,13 @@
+import numpy as np
+from Array import Arr
+import pandas as pd
 
+
+if __name__ == "__main__":
+    array = Arr()
+    array.input_values()
+    array.print_values()
+    clusters = pd.DataFrame(array._values)
+    print(clusters)
+    for x in range(0,array._n):
+        print(f"{clusters.loc[x].values}\n")
