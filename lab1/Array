@@ -1,1 +1,19 @@
+import numpy as np
 
+class Arr():
+    def __init__(self):
+        self._m = 0
+        self._n = 0
+        self._values = np.zeros((self._n, self._m))
+        
+    def input_values(self):
+        self._m = int(input("Enter number of features: "))
+        self._n = int(input("Enter number of examples: "))
+        self._values = np.zeros((self._n, self._m))
+        for x in range(0,self._n):
+            print(f"Enter {self._m} features for {x + 1} example: ")
+            for y in range(0,self._m):
+                self._values[x, y]=float(input())
+            
+    def print_values(self):
+        print(self._values)
