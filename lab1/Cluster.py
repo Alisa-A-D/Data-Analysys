@@ -7,7 +7,7 @@ class Clustering:
         self.clusters = {i: [i] for i in range(self.n)}
         self.dist_matrix = self._calculate_initial_distances()
 
-    def _cluster_distance(self, a, b):
+    def _object_distance(self, a, b):
         return np.sqrt(np.sum((a - b) ** 2))
 
     def _calculate_initial_distances(self):
@@ -86,3 +86,4 @@ class Clustering:
             for k, v in self.clusters.items():
                 print(f"  {k}: {v}")
             step += 1
+
