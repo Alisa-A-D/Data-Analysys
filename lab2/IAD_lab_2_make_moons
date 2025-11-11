@@ -32,10 +32,11 @@ def models_builder(X_train, Y_train):
             print(f"Model '{name}' trained.")
     return models
 #Step 4: Models visualization
-def model_visualizer(X_train, name):
-    plt.scatter(X_train[:,0], X_train[:,1], c=models[name].decision_function(X_train), cmap='seismic', edgecolors='k')
-    plt.title(name)
-    plt.show()
+def model_visualizer(X_train, models):
+    for name in models.keys():
+        plt.scatter(X_train[:,0], X_train[:,1], c=models[name].decision_function(X_train), cmap='seismic', edgecolors='k')            
+        plt.title(name)
+        plt.show()
 #Step 5: Predictions
 def predict(models, X_train, X_test):
     results = {}
@@ -123,8 +124,7 @@ if __name__ == "__main__":
     X_train, X_test, Y_train, Y_test = data_splitter(X, Y)
     print(f"\nStep 3: Building regression models")
     models = models_builder(X_train, Y_train)
-    for name in models.keys():
-        model_visualizer(X_train, name) 
+    model_visualizer(X_train, models) 
     print(f"\nStep 5: Predictions")
     predictions = predict(models, X_train, X_test)
     print(f"\nStep 6: Overfitting estimation")
