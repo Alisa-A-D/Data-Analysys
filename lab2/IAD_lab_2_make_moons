@@ -1,0 +1,140 @@
+from sklearn.datasets import make_moons
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (accuracy_score, confusion_matrix, precision_score,
+recall_score, f1_score, precision_recall_curve, roc_curve, roc_auc_score, PrecisionRecallDisplay, RocCurveDisplay)
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+#Step 1: Visualization
+def data_visualizer(X, Y):
+    plt.figure(figsize=(8,6))
+    plt.scatter(X[:,0], X[:,1], c=Y, cmap=plt.cm.coolwarm, s=60, edgecolors='k')
+    plt.title("Step 1: Data set 'moons'")
+    plt.xlabel("Feature 1")
+    plt.ylabel("Feature 2")
+    plt.show()
+#Step 2: Splitt data    
+def data_splitter(X, Y):
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, train_size = 0.3, random_state = 42)
+    print(f"Size train: {X_train.shape}, size test: {X_test.shape}")
+    return X_train, X_test, Y_train, Y_test
+#Step 3: Building regression models    
+def models_builder(X_train, Y_train):
+    models = {}
+    models["simple_reg"]=LogisticRegression()
+    models["simple_no_reg"]=LogisticRegression(penalty=None)
+    models["multi_reg"]=LogisticRegression(solver='lbfgs', multi_class='multinomial')
+    models["multi_no_reg"]=LogisticRegression(penalty=None, solver='lbfgs', multi_class='multinomial')
+    for name, model in models.items():
+            model.fit(X_train, Y_train)
+            print(f"Model '{name}' trained.")
+    return models
+#Step 4: Models visualization
+def model_visualizer(X_train, name):
+    plt.scatter(X_train[:,0], X_train[:,1], c=models[name].decision_function(X_train), cmap='seismic', edgecolors='k')
+    plt.title(name)
+    plt.show()
+#Step 5: Predictions
+def predict(models, X_train, X_test):
+    results = {}
+    for name, model in models.items():
+        Y_pred_train = model.predict(X_train)
+        Y_pred_test = model.predict(X_test)
+        results[name]={"y_pred_train": Y_pred_train, "y_pred_test": Y_pred_test}
+        print(f"Prediction for model '{name}' successful.")
+    return results
+#Step 6: Overfitting
+def overfitting_estimation(results, Y_train, Y_test): 
+    for name in results.keys():
+         acc_train = accuracy_score(Y_train,results[name]["y_pred_train"])
+         acc_test = accuracy_score(Y_test,results[name]["y_pred_test"])
+         print(f"..... Model: {name} .....\nTrain accuracy: {acc_train}\nTest accuracy: {acc_test}\nDifference: {acc_train-acc_test}")
+         if abs(acc_train-acc_test) > 0.05:
+             print("Model is overfitted!\n") 
+         else:
+             print("No overfitting detected!\n") 
+#Step 7: Posterior probabilities
+def posterior_prob(models, predictions, X_test, Y_test):
+    for name, model in models.items():
+        probs = np.array(model.predict_proba(X_test[:10]))
+        df_probs = pd.DataFrame(np.round(probs, 4), columns=[f"Class {i}" for i in range(probs.shape[1])])
+        df_probs['Prediction']=np.array(predictions[name]["y_pred_test"][:10])
+        df_probs['Original class']=np.array(Y_test[:10])
+        print(f"Model {name}\n{df_probs}\n")
+#Step 8: Decision boundaries
+def decision_boundaries(X, Y, models):
+    x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+    y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+    xx, yy = np.meshgrid(np.linspace(x_min, x_max, 200),np.linspace(y_min, y_max, 200))
+    for name in models.keys():
+        Z = models[name].predict(np.c_[xx.ravel(),yy.ravel()])
+        Z = Z.reshape(xx.shape)
+        plt.figure(figsize=(8, 6))
+        plt.contourf(xx, yy, Z, alpha=0.3, cmap=plt.cm.coolwarm)
+        plt.scatter(X[:,0], X[:,1], c=Y, cmap=plt.cm.coolwarm, s=60, edgecolors='k')
+        plt.title(f"Decision boundaries for model '{name}'")
+    plt.show()    
+#Step 9: Quality criteria
+def quality_criteria(models, predictions, X_train, X_test, Y_train, Y_test):
+    labels = [("Train set", Y_train, "y_pred_train", X_train), ("Test set", Y_test, "y_pred_test", X_test)]
+    for name in predictions.keys():
+         metrics = {} 
+         for l1, l2, l3, l4 in labels:
+             metrics[l1]={"Confusion matrix": confusion_matrix(l2, predictions[name][l3]),
+                          "Precision": precision_score(l2, predictions[name][l3]),
+                          "Recall": recall_score(l2, predictions[name][l3]),
+                          "F1 score": f1_score(l2, predictions[name][l3]),
+                          "AUC score": roc_auc_score(l2, models[name].decision_function(l4))}
+             PrecisionRecallDisplay.from_estimator(models[name], l4, l2)
+             plt.title(f"PR_curve for '{name}' on {l1}")
+             RocCurveDisplay.from_estimator(models[name], l4, l2)
+             plt.title(f"ROC_curve for '{name}' on {l1}")
+             plt.show()
+         df_metrics = pd.DataFrame(metrics)
+         print(f"..... Metrics for model: {name} .....\n{df_metrics}\n")
+#Step 11:GridSearch
+def grid_search(X_train, Y_train):
+    param_grid = {"penalty":('l1', 'l2'), "C":[0.5, 1, 3], "solver":('liblinear','saga')}
+    grid_search = GridSearchCV(LogisticRegression(), param_grid)
+    grid_search.fit(X_train, Y_train)
+    #print(f"Best parameters: {grid_search.best_params_}\nBest model: {grid_search.best_estimator_}\nBest score: {grid_search.best_score_}")
+    results_df = pd.DataFrame(grid_search.cv_results_)
+    results_df = results_df.sort_values(by='mean_test_score', ascending=False)
+    print(results_df[['params','mean_test_score','mean_test_score']])     
+    print(f"\nBest parameters: {grid_search.best_params_}\nBest model: {grid_search.best_estimator_}\nBest score: {grid_search.best_score_}")
+#Step 13: Smaller splitts of X/Y sets
+def smaller_splitt(X, Y):
+    sizes=([0.1, 0.2])
+    print(f"Smaller train sets:")
+    for size in sizes:
+        X_new_train, X_new_test, Y_new_train, Y_new_test = train_test_split(X, Y, train_size = size, random_state = 42)
+        print(f"Size train: {X_new_train.shape}, size test: {X_new_test.shape}")
+        models = models_builder(X_new_train, Y_new_train)
+        predictions = predict(models, X_new_train, X_new_test)
+        overfitting_estimation(predictions, Y_new_train, Y_new_test)
+      
+    
+if __name__ == "__main__":
+    X, Y = make_moons(n_samples=200, noise=0.2, random_state=42)
+    data_visualizer(X, Y)
+    print(f"Step 2: Splitt data")
+    X_train, X_test, Y_train, Y_test = data_splitter(X, Y)
+    print(f"\nStep 3: Building regression models")
+    models = models_builder(X_train, Y_train)
+    for name in models.keys():
+        model_visualizer(X_train, name) 
+    print(f"\nStep 5: Predictions")
+    predictions = predict(models, X_train, X_test)
+    print(f"\nStep 6: Overfitting estimation")
+    overfitting_estimation(predictions, Y_train, Y_test)
+    print(f"Step 7: Posterior probabilities")
+    posterior_prob(models, predictions, X_test, Y_test)
+    decision_boundaries(X, Y, models) 
+    print(f"\nStep 9: Quality criteria")
+    quality_criteria(models, predictions, X_train, X_test, Y_train, Y_test)
+    print(f"\nStep 11:GridSearch")
+    grid_search(X_train, Y_train)
+    print(f"\nStep 13: Smaller splitts of X/Y sets")
+    smaller_splitt(X, Y)
