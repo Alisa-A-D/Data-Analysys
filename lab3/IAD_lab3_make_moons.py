@@ -8,6 +8,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+import warnings
+from sklearn.exceptions import ConvergenceWarning
+warnings.filterwarnings("ignore", category=ConvergenceWarning)
+
 #Step 1: Visualization
 def data_visualizer(X, Y):
     plt.figure(figsize=(8,6))
@@ -129,23 +133,23 @@ def smaller_splits(X, Y):
         overfitting_estimation(predictions, Y_new_train, Y_new_test)
 
 if __name__ == "__main__":
-  X, Y = make_moons(n_samples=200, noise=0.2, random_state=42)
-  data_visualizer(X, Y)
-  print(f"Step 2: Splitt data")
-  X_train, X_test, Y_train, Y_test = data_splitter(X, Y)
-  print(f"\nStep 3: Building models")
-  models = models_builder(X_train, Y_train)
-  model_visualizer(X_train, models) 
-  print(f"\nStep 5: Predictions")
-  predictions = predict(models, X_train, X_test)
-  print(f"\nStep 6: Overfitting estimation")
-  overfitting_estimation(predictions, Y_train, Y_test)
-  print(f"Step 7: Posterior probabilities")
-  posterior_prob(models, predictions, X_test, Y_test)
-  decision_boundaries(X, Y, models) 
-  print(f"\nStep 9: Quality criteria")
-  quality_criteria(models, predictions, X_train, X_test, Y_train, Y_test)
-  print(f"\nStep 11:GridSearch")
-  grid_search(X_train, Y_train)
-  print(f"\nStep 13: Smaller splitts of X/Y sets")
-  smaller_splits(X, Y)
+    X, Y = make_moons(n_samples=200, noise=0.2, random_state=42)
+    data_visualizer(X, Y)
+    print(f"Step 2: Splitt data")
+    X_train, X_test, Y_train, Y_test = data_splitter(X, Y)
+    print(f"\nStep 3: Building models")
+    models = models_builder(X_train, Y_train)
+    model_visualizer(X_train, models) 
+    print(f"\nStep 5: Predictions")
+    predictions = predict(models, X_train, X_test)
+    print(f"\nStep 6: Overfitting estimation")
+    overfitting_estimation(predictions, Y_train, Y_test)
+    print(f"Step 7: Posterior probabilities")
+    posterior_prob(models, predictions, X_test, Y_test)
+    decision_boundaries(X, Y, models) 
+    print(f"\nStep 9: Quality criteria")
+    quality_criteria(models, predictions, X_train, X_test, Y_train, Y_test)
+    print(f"\nStep 11:GridSearch")
+    grid_search(X_train, Y_train)
+    print(f"\nStep 13: Smaller splitts of X/Y sets")
+    smaller_splits(X, Y)
