@@ -29,8 +29,6 @@ def models_builder(X_train, Y_train):
     temp.fit(X_train)
     print(temp.mean_, temp.scale_)
     X_train_trform = temp.transform(X_train)
-    print(X_train[:15])
-    print(X_train_trform[:15])
     for l1, l2, l3 in labels:
         models[l2] = MLPClassifier(hidden_layer_sizes=(l1,), max_iter=200)
         models[l3] = MLPClassifier(hidden_layer_sizes=(l1,), max_iter=200)
