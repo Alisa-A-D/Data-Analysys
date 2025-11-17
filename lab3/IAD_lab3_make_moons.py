@@ -27,7 +27,6 @@ def models_builder(X_train, Y_train):
     labels = [(50, "50_no_scale","50_scale"),(100, "100_no_scale","100_scale"),(150, "150_no_scale","150_scale")]
     temp = StandardScaler()
     temp.fit(X_train)
-    print(temp.mean_, temp.scale_)
     X_train_trform = temp.transform(X_train)
     for l1, l2, l3 in labels:
         models[l2] = MLPClassifier(hidden_layer_sizes=(l1,), max_iter=200)
@@ -109,6 +108,16 @@ def quality_criteria(models, predictions, X_train, X_test, Y_train, Y_test):
              plt.show()
          df_metrics = pd.DataFrame(metrics)
          print(f"..... Metrics for model: {name} .....\n{df_metrics}\n")
+#Step 13: Smaller splits of X/Y sets
+def smaller_splits(X, Y):
+    sizes=([0.1, 0.2])
+    print(f"Smaller train sets:")
+    for size in sizes:
+        X_new_train, X_new_test, Y_new_train, Y_new_test = train_test_split(X, Y, train_size = size, random_state = 42)
+        print(f"Size train: {X_new_train.shape}, size test: {X_new_test.shape}")
+        models = models_builder(X_new_train, Y_new_train)
+        predictions = predict(models, X_new_train, X_new_test)
+        overfitting_estimation(predictions, Y_new_train, Y_new_test)
 
   if __name__ == "__main__":
     X, Y = make_moons(n_samples=200, noise=0.2, random_state=42)
@@ -127,3 +136,6 @@ def quality_criteria(models, predictions, X_train, X_test, Y_train, Y_test):
     decision_boundaries(X, Y, models) 
     print(f"\nStep 9: Quality criteria")
     quality_criteria(models, predictions, X_train, X_test, Y_train, Y_test)
+    
+    print(f"\nStep 13: Smaller splitts of X/Y sets")
+    smaller_splits(X, Y)
