@@ -28,32 +28,43 @@ def data_splitter(X, Y):
 #Step 3: Building regression models    
 def models_builder(X_train, Y_train):
     models = {}
-    labels = [(50, "50_no_scale","50_scale"),(100, "100_no_scale","100_scale"),(150, "150_no_scale","150_scale")]
+    labels = [(20, "20_no_scale","20_scale"),(30, "30_no_scale","30_scale"),(50, "50_no_scale","50_scale")]
     temp = StandardScaler()
     temp.fit(X_train)
     X_train_trform = temp.transform(X_train)
     for l1, l2, l3 in labels:
-        models[l2] = MLPClassifier(hidden_layer_sizes=(l1,), max_iter=200)
-        models[l3] = MLPClassifier(hidden_layer_sizes=(l1,), max_iter=200)
+        models[l2] = MLPClassifier(hidden_layer_sizes=(l1,), max_iter=200, random_state=42)
+        models[l3] = MLPClassifier(hidden_layer_sizes=(l1,), max_iter=200, random_state=42)
         models[l2].fit(X_train, Y_train)
         models[l3].fit(X_train_trform, Y_train)
         print(f"Model '{l2}' trained.\nModel '{l3}' trained.")
     return models
-#Step 4: Models visualization
+#Step 4: Models visualization                              
 def model_visualizer(X_train, models):
-    for name in models.keys():
-        temp = models[name].predict_proba(X_train)
+    #Weight and belonging probabilities
+    for name, model in models.items():
+        temp = model.predict_proba(X_train)
         df = np.empty(len(temp))
-        #print(temp)
         for i in range(len(temp)):
             if temp[i][0] > temp[i][1]:
                 df[i] = -(temp[i][0] - 0.5)
             else:
                 df[i] = temp[i][1] - 0.5
-        #print(f"Model '{name}' df:{df}")
-        plt.scatter(X_train[:,0], X_train[:,1], c=df, cmap='seismic', edgecolors='k')            
-        plt.title(name)
-        plt.show()
+        fig, axs = plt.subplots(2, 1, figsize=(8,10))
+        axs[1].matshow(model.coefs_[0])
+        axs[1].set_title(f"Weight matrix: {name}")         
+        axs[0].scatter(X_train[:,0], X_train[:,1], c=df, cmap='seismic', edgecolors='k') 
+        axs[0].set_title(f"Class belonging decision: {name}") 
+        fig.subplots_adjust(top=0.95, bottom=0.05, hspace=0)
+    plt.show()
+    #Loss curves
+    for name, model in models.items():
+        plt.plot(model.loss_curve_, label=name)
+    plt.title("Loss curves for models")
+    plt.xlabel("Iterations")
+    plt.ylabel("Losses")
+    plt.legend(loc='best', fontsize='small')
+    plt.show()
 #Step 5: Predictions
 def predict(models, X_train, X_test):
     results = {}
@@ -63,7 +74,7 @@ def predict(models, X_train, X_test):
         results[name]={"y_pred_train": Y_pred_train, "y_pred_test": Y_pred_test}
         print(f"Prediction for model '{name}' successful.")
     return results
-#Step 6: Overfitting
+#Step 6: Overfitting                                       
 def overfitting_estimation(results, Y_train, Y_test): 
     for name in results.keys():
          acc_train = accuracy_score(Y_train,results[name]["y_pred_train"])
@@ -114,7 +125,7 @@ def quality_criteria(models, predictions, X_train, X_test, Y_train, Y_test):
          print(f"..... Metrics for model: {name} .....\n{df_metrics}\n")
 #Step 11:GridSearch
 def grid_search(X_train, Y_train):
-    param_grid = {"hidden_layer_sizes":((50,50), (100,), (200,)), "solver":("lbfgs","sgd","adam"), "max_iter":[200, 500, 1000]}
+    param_grid = {"hidden_layer_sizes":((30,30), (50,), (100,)), "solver":("lbfgs","sgd","adam"), "max_iter":[200, 500, 1000]}
     grid_search = GridSearchCV(MLPClassifier(), param_grid)
     grid_search.fit(X_train, Y_train)
     results_df = pd.DataFrame(grid_search.cv_results_)
@@ -133,7 +144,7 @@ def smaller_splits(X, Y):
         overfitting_estimation(predictions, Y_new_train, Y_new_test)
 
 if __name__ == "__main__":
-    X, Y = make_moons(n_samples=200, noise=0.2, random_state=42)
+    X, Y = make_moons(n_samples=400, noise=0.2, random_state=42)
     data_visualizer(X, Y)
     print(f"Step 2: Splitt data")
     X_train, X_test, Y_train, Y_test = data_splitter(X, Y)
